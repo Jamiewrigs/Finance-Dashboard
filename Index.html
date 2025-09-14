@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Financial Adviser Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    /* Your existing CSS styles */
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Financial Adviser Dashboard</h1>
+  <div id="datetime"></div>
+</header>
+
+<div class="container">
+  <!-- Interest Rates -->
+  <div class="widget" id="rates-widget">
+    <h2>Interest Rates</h2>
+    <ul>
+      <li>UK Base Rate (BoE): <span id="uk-rate">Loading...</span>%</li>
+      <li>US Fed Funds Rate: <span id="us-rate">Loading...</span>%</li>
+      <li>Last Update: <span id="rates-date">Loading...</span></li>
+    </ul>
+  </div>
+
+  <!-- Currencies -->
+  <div class="widget" id="currency-widget">
+    <h2>Currency Rates</h2>
+    <ul>
+      <li>GBP/USD: <span id="gbp-usd">Loading...</span></li>
+      <li>GBP/EUR: <span id="gbp-eur">Loading...</span></li>
+    </ul>
+  </div>
+
+  <!-- Stock Indexes -->
+  <div class="widget" id="indexes-widget">
+    <h2>Major Indexes</h2>
+    <table class="index-table">
+      <thead>
+        <tr>
+          <th>Index</th><th>24h</th><th>7d</th><th>1M</th><th>CY</th><th>12M</th><th>3Y</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>FTSE 100</td>
+          <td id="ftse-24h">-</td><td id="ftse-7d">-</td><td id="ftse-1m">-</td>
+          <td id="ftse-cy">-</td><td id="ftse-12m">-</td><td id="ftse-3y">-</td>
+        </tr>
+        <tr>
+          <td>S&P 500</td>
+          <td id="sp-24h">-</td><td id="sp-7d">-</td><td id="sp-1m">-</td>
+          <td id="sp-cy">-</td><td id="sp-12m">-</td><td id="sp-3y">-</td>
+        </tr>
+        <tr>
+          <td>NASDAQ</td>
+          <td id="nasdaq-24h">-</td><td id="nasdaq-7d">-</td><td id="nasdaq-1m">-</td>
+          <td id="nasdaq-cy">-</td><td id="nasdaq-12m">-</td><td id="nasdaq-3y">-</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- News Feed -->
+  <div class="widget" id="news-widget">
+    <h2>Finance News</h2>
+    <div id="news-feed">
+      <p>Loading news...</p>
+    </div>
+  </div>
+
+  <!-- UK Tax Table -->
+  <div class="widget" id="tax-widget">
+    <h2>UK Tax & Allowances 2025/26</h2>
+    <table>
+      <thead>
+        <tr><th>Allowance / Band</th><th>Rate / Limit</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Personal Allowance</td><td>£12,570</td></tr>
+        <tr><td>Basic Rate</td><td>20% on £12,571–£50,270</td></tr>
+        <tr><td>Higher Rate</td><td>40% on £50,271–£125,140</td></tr>
+        <tr><td>Additional Rate</td><td>45% on £125,141+</td></tr>
+        <tr><td>Dividend Allowance</td><td>£1,000</td></tr>
+        <tr><td>Capital Gains Allowance</td><td>£6,000</td></tr>
+        <tr><td>Annual ISA Allowance</td><td>£20,000</td></tr>
+        <tr><td>Pension Annual Allowance</td><td>£60,000</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+  // === Date & Time ===
+  function updateDateTime() {
+    const now = new Date();
+    document.getElementById('datetime').innerText = now.toLocaleString();
+  }
+  setInterval(updateDateTime, 1000);
+  updateDateTime();
+
+  // === Fetch Live Data ===
+  async function fetchLiveData() {
+    try {
+      // Fetch interest rates
+      const ratesRes = await fetch('https://api.api-ninjas.com/v1/interestrate?country=GB', {
+        headers: { 'X-Api-Key': 'MnGtX5zTzHeDZqlaDAQMCA==YzjzVbNf1cWxd77R' }
+      });
+      const ratesData = await ratesRes.json();
+      document.getElementById('uk-rate').innerText = ratesData[0].rate;
+      document.getElementById('rates-date').innerText = new Date().toLocaleDateString();
+
+      const usRatesRes = await fetch('https://api.api-ninjas.com/v1/interestrate?country=US', {
+        headers: { 'X-Api-Key': 'MnGtX5zTzHeDZqlaDAQMCA==YzjzVbNf1cWxd77R' }
+      });
+      const usRatesData = await usRatesRes.json();
+      document.getElementById('us-rate').innerText = usRatesData[0].rate;
+
+      // Fetch currency rates
+      const currencyRes = await fetch('https://api.exchangerate-api.com/v4/latest/GBP');
+      const currencyData = await currencyRes.json();
+      document.getElementById('gbp-usd').innerText = currencyData.rates.USD;
+      document.getElementById('gbp-eur').innerText = currencyData.rates.EUR;
+
+      // Fetch stock indexes
+      const indexesRes = await fetch('https://api.twelvedata.com/time_series?symbol=FTSE:FTSE,SPY,QQQ&interval=1day&apikey=b4b1bf535bfa433c911f7d77cfeb6eb3');
+      const indexesData = await indexesRes.json();
+      document.getElementById('ftse-24h').innerText = indexesData[0].values[0].close;
+      document.getElementById('sp-24h').innerText = indexesData[1].values[0].close;
+      document.getElementById('nasdaq-24h').innerText = indexesData[2].values[0].close;
+
+      // Fetch news
+      const newsRes = await fetch('https://newsapi.org/v2/top-headlines?category=business&apiKey=326f97dff66b4600b4c76fe656bdc5b4');
+      const newsData = await newsRes.json();
+      const newsFeed = document.getElementById('news-feed');
+      newsFeed.innerHTML = '';
+      newsData.articles.slice(0, 5).forEach(article => {
+        const div = document.createElement('div');
+        div.className = 'news-card';
+        div.innerHTML = `
+          <img src="${article.urlToImage}" alt="news">
+          <div class="news-content">
+            <h3><a href="${article.url}" target="_blank">${article.title}</a></h3>
+            <p>${article.description}</p>
+          </div>
+        `;
+        newsFeed.appendChild(div);
+      });
+    } catch (error) {
+      console.error('Error fetching live data:', error);
+    }
+  }
+
+  // Initial data fetch
+  fetchLiveData();
+  setInterval(fetchLiveData, 10 * 60 * 1000); // Refresh every 10 minutes
+</script>
+
+</body>
+</html>
